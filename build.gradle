@@ -16,18 +16,28 @@ dependencies {
 task client(type:JavaExec) {
   main = "ssl.Client"
   classpath = sourceSets.main.runtimeClasspath
-
+  String baseDir = project.rootDir.absolutePath
   if (!project.hasProperty("url")) {
     logger.error("\nUsage: ./gradlew client -Purl=https://www.some.url")
     ant.fail("Required property 'url' is missing.")
     System.exit(1)
   } else {
-    args(url)
-
+    args("-Djavax.net.ssl.trustStore="+baseDir+"/ssl-certificates/cacert.pem", url)
   }
 }
 
 task server(type:JavaExec) {
   main = "ssl.Server"
   classpath = sourceSets.main.runtimeClasspath
+  String baseDir = project.rootDir.absolutePath
+  sslPort = 8443
+  sslPassword = "password"
+  if (project.hasProperty("port")) {
+    sslPort = Integer.valueOf(port)
+  }
+  args("--port", sslPort,
+       "--key", baseDir+"/ssl-certificate/requests/webserverkey.pem",
+       "--certificate", baseDir+"/ssl-certificate/requests/webservercert.pem",
+       "--pass", "password")
+
 }
