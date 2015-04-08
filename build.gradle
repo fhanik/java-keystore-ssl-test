@@ -1,0 +1,33 @@
+repositories {
+  mavenCentral()
+  jcenter()
+  maven {
+    url 'http://repo.spring.io/plugins-release'
+  }
+}
+
+apply plugin: 'java'
+
+dependencies {
+  compile group: 'io.netty', name: 'netty-all', version:'5.0.0.Alpha2'
+  compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.9-beta-1'
+}
+
+task client(type:JavaExec) {
+  main = "ssl.Client"
+  classpath = sourceSets.main.runtimeClasspath
+
+  if (!project.hasProperty("url")) {
+    logger.error("\nUsage: ./gradlew client -Purl=https://www.some.url")
+    ant.fail("Required property 'url' is missing.")
+    System.exit(1)
+  } else {
+    args(url)
+
+  }
+}
+
+task server(type:JavaExec) {
+  main = "ssl.Server"
+  classpath = sourceSets.main.runtimeClasspath
+}
