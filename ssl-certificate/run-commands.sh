@@ -10,6 +10,11 @@ set -x -e
 
 cd $BASE_DIR
 
+#reset all our certs
+rm -rf private/cakey.pem serial index.txt cacert.pem newcerts/*.pem requests/webserver*.*
+touch index.txt
+echo '01' > serial
+
 openssl genrsa -passout pass:password -des3 -out private/cakey.pem 4096
 
 openssl req -passin pass:password -new -x509 -key private/cakey.pem -out cacert.pem -days 3650 -set_serial 0 -subj "/C=US/ST=Colorado/L=Castle Rock/O=Filips Certificate Authority/OU=IT Department/CN=Filips Certificate Authority"
