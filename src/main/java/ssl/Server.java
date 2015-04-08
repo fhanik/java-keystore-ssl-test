@@ -8,6 +8,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslProvider;
 import joptsimple.BuiltinHelpFormatter;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
@@ -16,7 +17,6 @@ import joptsimple.OptionSpec;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 public class Server {
 
@@ -31,7 +31,7 @@ public class Server {
 
         OptionSpec<File>   key =  parser.accepts("key", "Private Key used with SSL Certificate").withRequiredArg().ofType(File.class);
         OptionSpec<File>   cert=  parser.accepts("certificate", "SSL Certificate for the Server").withRequiredArg().ofType(File.class);
-        OptionSpec<String> pass =  parser.accepts("pass", "Passphrase for private key").withOptionalArg().ofType(String.class).defaultsTo("password");
+        //OptionSpec<String> pass =  parser.accepts("pass", "Passphrase for private key").withOptionalArg().ofType(String.class).defaultsTo("password");
         OptionSpec<Integer>port = parser.accepts("port", "TCP Listen Port").withOptionalArg().ofType(Integer.TYPE).defaultsTo(8443);
         OptionSet options = null;
         try {
@@ -44,9 +44,11 @@ public class Server {
         int sslPort = options.valueOf(port);
         File sslKey = options.valueOf(key);
         File sslCert = options.valueOf(cert);
-        String passphrase = options.valueOf(pass);
+        //String passphrase = options.valueOf(pass);
 
-        SslContext sslContext = SslContext.newServerContext(sslCert, sslKey, passphrase);
+        System.out.println("Options:\n"+options.asMap());
+
+        SslContext sslContext = SslContext.newServerContext(SslProvider.JDK, sslCert, sslKey, null);
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {

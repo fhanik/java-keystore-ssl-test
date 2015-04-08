@@ -13,31 +13,44 @@ dependencies {
   compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.9-beta-1'
 }
 
-task client(type:JavaExec) {
+defaultTasks = ['assemble']
+
+task client(type: JavaExec) {
   main = "ssl.Client"
   classpath = sourceSets.main.runtimeClasspath
   String baseDir = project.rootDir.absolutePath
-  if (!project.hasProperty("url")) {
-    logger.error("\nUsage: ./gradlew client -Purl=https://www.some.url")
-    ant.fail("Required property 'url' is missing.")
-    System.exit(1)
-  } else {
-    args("-Djavax.net.ssl.trustStore="+baseDir+"/ssl-certificates/cacert.pem", url)
+  jvmArgs(
+      "-Djavax.net.ssl.trustStore=" + baseDir + "/ssl-certificate/cacert.jks",
+      "-Djavax.net.ssl.trustStorePassword=changeit"
+  )
+  if (project.hasProperty("url")) {
+    args(project.url)
+  }
+  doLast {
+    if (!project.hasProperty("url")) {
+      logger.error("\nUsage: ./gradlew client -Purl=https://www.some.url")
+      ant.fail("Required property 'url' is missing.")
+    }
   }
 }
 
-task server(type:JavaExec) {
+task server(type: JavaExec) {
   main = "ssl.Server"
   classpath = sourceSets.main.runtimeClasspath
-  String baseDir = project.rootDir.absolutePath
-  sslPort = 8443
-  sslPassword = "password"
+  def String baseDir = project.rootDir.absolutePath
+  def sslPort = 8443
   if (project.hasProperty("port")) {
-    sslPort = Integer.valueOf(port)
+    sslPort = project.port
+  }
+  def sslKeyFile = baseDir + "/ssl-certificate/requests/webserverkey-pkcs8.pem"
+  if (project.hasProperty("key")) {
+    sslKeyFile = project.key
+  }
+  def sslCertificate = baseDir + "/ssl-certificate/requests/webservercert.pem"
+  if (project.hasProperty("certificate")) {
+    sslCertificate = project.certificate
   }
   args("--port", sslPort,
-       "--key", baseDir+"/ssl-certificate/requests/webserverkey.pem",
-       "--certificate", baseDir+"/ssl-certificate/requests/webservercert.pem",
-       "--pass", "password")
-
+       "--key", sslKeyFile,
+       "--certificate", sslCertificate)
 }

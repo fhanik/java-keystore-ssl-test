@@ -1,6 +1,7 @@
 package ssl;
 
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -36,11 +37,15 @@ public class HttpResponseHandler extends SimpleChannelInboundHandler<Object> {
                     FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, CONTINUE);
                     ctx.write(response);
                 }
-                ctx.write(new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer("ok", CharsetUtil.UTF_8)));
+                DefaultFullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer("\n\nOK - Successful Test Response\n\n", CharsetUtil.UTF_8));
+                response.headers().set("Connection", "close");
+                response.headers().set("Content-Type", "text/plain");
+                response.headers().set("Content-Length", response.content().readableBytes() + "");
+                ctx.write(response);
             } else {
                 ctx.write(new DefaultHttpResponse(HTTP_1_1, METHOD_NOT_ALLOWED));
             }
-
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
