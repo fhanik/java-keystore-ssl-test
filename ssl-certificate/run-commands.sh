@@ -26,8 +26,8 @@ cd $BASE_DIR/requests
 openssl genrsa -passout pass:password -des3 -out webserverkey.pem 2048
 
 #generate the *.127.0.0.1.xip.io cert
-openssl req -passin pass:password -new -key webserverkey.pem -out webservercert.csr -days 3650 -config ../config.txt -subj "/C=US/ST=Colorado/L=Castle Rock/O=Filips WebServer Level 1/OU=IT Department/CN=*.127.0.0.1.xip.io"
-openssl ca -batch -passin pass:password -in webservercert.csr -out webservercert.pem -config $BASE_DIR/config.txt
+openssl req -passin pass:password -new -key webserverkey.pem -out webservercert.csr -days 3650 -config ../config-req.txt -subj "/C=US/ST=Colorado/L=Castle Rock/O=Filips WebServer Level 1/OU=IT Department/CN=*.127.0.0.1.xip.io"
+openssl ca -batch -passin pass:password -in webservercert.csr -out webservercert.pem -config $BASE_DIR/config-ca.txt
 
 openssl rsa -passin pass:password -in webserverkey.pem -out webserverkey_nopasswd.pem
 

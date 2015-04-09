@@ -76,7 +76,7 @@ curl -v --cacert ssl-certificate/cacert.pem https://zone1.login.127.0.0.1.xip.io
 
 ##Java Client Test
 ```
-./gradlew client -Pnotrust -Purl=https://www.google.com
+GRADLE_USER_HOME=/tmp/gradle ./gradlew client -Pnotrust -Purl=https://www.google.com
 ```
 Uses the default Java trust store to test an SSL connection. Performs simple GET.
 Removing the ```notrust``` flag, will enable the ```/ssl-certificate/cacert.jks``` trust store.
