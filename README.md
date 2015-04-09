@@ -1,19 +1,94 @@
-Java Keystore SSL/HTTPS Test
-====================
-Java CLI utility to execute outbound HTTPS calls. 
+Java Keystore SSL/HTTPS Wildcard Tests
+======================================
+SSL Utilities to generate wildcard certs.
+This creates SSL certificate with wildcards in the Subject Alternative Name
+to support the [UAA identity zones](https://github.com/cloudfoundry/uaa) (multi tenancy)
 
-##Build
+##Requirements
+
+* Java 7+
+* Git 1.8+
+* OpenSSL 1.0.1f+ 
+
+##Cleaning up the repo
+If you have ran samples or generated certificates before, you can clean them up
 ```
-javac Test.java 
-java Test https://www.google.com
+git clean -fd
 ```
 
-##Usage
+##Generating Wildcard Certificate (and certificate authority)
 ```
-java Test <https://address.server.edu> [timeout]
+ssl-certificate/run-commands.sh
+```
+Generates the following files (the command is idempotent, rerun it and it generates a new set)
+
+1. cacert.jks - a Java keystore containing the Certificate Authority (CA) certificate
+2. private/cakey.pem - the private key for the CA certificate
+3. cacert.pem - The CA certificate in PEM format
+4. requests/webserverkey-pkcs8.pem - server private key, no passphrase
+5. requests/webserverkey.pem - server private key, passphrase protected
+6. requests/webservercert.csr - certificate signing requests - contains the Subject Alternative Names
+7. requests/webservercert.pem - server signed certificate, signed by the generated CA
+
+And we have the following wildcards covered
+
+1.  ```*.127.0.0.1.xip.io```
+2.  ```*.uaa.127.0.0.1.xip.io```
+3.  ```*.login.127.0.0.1.xip.io```
+
+##Start up the server
+```
+./gradlew server
+```
+This starts up a server on port 8443, that uses the webservercert.pem certificate
+
+##Client Examples
+
+###Failing because we can't trust
+```
+curl -v https://uaa.127.0.0.1.xip.io:8443
 ```
 
-##Sample
+###Succeed - access the UAA
+```
+curl -v --cacert ssl-certificate/cacert.pem https://uaa.127.0.0.1.xip.io:8443
+```
+
+###Succeed - access the login server
+```
+curl -v --cacert ssl-certificate/cacert.pem https://login.127.0.0.1.xip.io:8443
+```
+
+###Succeed - access a deployed app
+```
+curl -v --cacert ssl-certificate/cacert.pem https://anyapp.127.0.0.1.xip.io:8443
+```
+
+###Succeed - access a zone in the UAA subdomain
+```
+curl -v --cacert ssl-certificate/cacert.pem https://zone1.uaa.127.0.0.1.xip.io:8443
+```
+
+###Succeed - access a zone in the login subdomain
+```
+curl -v --cacert ssl-certificate/cacert.pem https://zone1.login.127.0.0.1.xip.io:8443
+```
+
+##Java Client Test
+```
+./gradlew client -Pnotrust -Purl=https://www.google.com
+```
+Uses the default Java trust store to test an SSL connection. Performs simple GET.
+Removing the ```notrust``` flag, will enable the ```/ssl-certificate/cacert.jks``` trust store.
+
+###Testing out the Java Client against the Java Server
+Because gradle locks the cache, we need a new cache directory
+```
+GRADLE_USER_HOME=/tmp/gradle ./gradlew client -Purl=https://zone1.login.127.0.0.1.xip.io:8443
+```
+
+
+##Java Samples
 
 ###Successful connection
 ```
@@ -67,4 +142,17 @@ Caused by: sun.security.provider.certpath.SunCertPathBuilderException: unable to
         at sun.security.validator.PKIXValidator.doBuild(PKIXValidator.java:380)
         ... 18 more
 ```
- 
+
+## References
+
+* http://blog.endpoint.com/2013/10/ssl-certificate-sans-and-multi-level.html
+* http://acidx.net/wordpress/2012/09/creating-a-certification-authority-and-a-server-certificate-on-ubuntu/
+* http://tools.ietf.org/html/rfc2818
+
+```Text
+   If a subjectAltName extension of type dNSName is present, that MUST
+   be used as the identity. Otherwise, the (most specific) Common Name
+   field in the Subject field of the certificate MUST be used. Although
+   the use of the Common Name is existing practice, it is deprecated and
+   Certification Authorities are encouraged to use the dNSName instead.
+```

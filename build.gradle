@@ -19,10 +19,12 @@ task client(type: JavaExec) {
   main = "ssl.Client"
   classpath = sourceSets.main.runtimeClasspath
   String baseDir = project.rootDir.absolutePath
-  jvmArgs(
-      "-Djavax.net.ssl.trustStore=" + baseDir + "/ssl-certificate/cacert.jks",
-      "-Djavax.net.ssl.trustStorePassword=changeit"
-  )
+  if (!project.hasProperty("notrust")) {
+    jvmArgs(
+        "-Djavax.net.ssl.trustStore=" + baseDir + "/ssl-certificate/cacert.jks",
+        "-Djavax.net.ssl.trustStorePassword=changeit"
+    )
+  }
   if (project.hasProperty("url")) {
     args(project.url)
   }
